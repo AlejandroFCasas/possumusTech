@@ -11,14 +11,42 @@ public class Program
         using (var ctx = new DatabaseContext())
         {
             InitializeDB(ctx);
+            var consultaCustomer = ctx.Customers.Where(x=> x.DateOfBirth.Year < 2000).ToList();
 
-            //Ejemplo de impresion
-            foreach (var purchase in ctx.Purchases)
+            foreach (Customer customer in consultaCustomer)
             {
-                Console.WriteLine(purchase.PurchaseId.ToString());
+                var compras = ctx.Purchases.ToList()
+                .Where(x => x.CustomerId == customer.CustomerId)
+                .OrderByDescending(p => p.PurchaseDateUTC.Date)
+                .ThenByDescending(p => p.Total)
+                .ToList();
+
+                Console.WriteLine(customer.FullName + " (Edad: " + 
+                    (DateTime.Today.Year - customer.DateOfBirth.Year) + " años)");
+                var separador = "==============================";
+
+                Console.WriteLine(separador);
+
+                foreach (Purchase compra in compras)
+                {                    
+                Console.Write(compra.PurchaseDateUTC.ToString("dd/MM/yyyy") + " ----- $");
+                    String cadena = decimal.Round(compra.Total).ToString();
+                    char espacio = ' ';
+                    Console.WriteLine(cadena.PadLeft(12, espacio));
+                }
+                decimal totalCompras = 0;
+                foreach (Purchase purchase in compras)
+                {
+                    totalCompras += purchase.Total;
+                }
+                Console.WriteLine(separador);
+
+                Console.WriteLine("TOTAL: $ "+decimal.Round(totalCompras));
+                Console.WriteLine("");
             }
 
         }
+
     }
 
     public static void InitializeDB(DatabaseContext ctx)
